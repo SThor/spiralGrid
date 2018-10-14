@@ -23,33 +23,11 @@ var canvas = {
   color_main:"black",
   padding:50,
   settings:{
-    cellsInWidth : 10,
-    //cellWidth:50,
-    spacing:10,
-    radius:100,
-    modulo:3
+    point1:{"x":300,"y":300},
+    point2:{"x":200,"y":200},
+    spacing:0,
+    currentStep:0.95
   },
-  // palette:[
-  //   "#bbf67f",
-  //   "#a6df86",
-  //   "#91c88c",
-  //   "#7bb093",
-  //   "#669999",
-  //   "#e20245"
-  //   ],
-  // palette:[
-  //   "#6eb686",
-  //   "#9aac84",
-  //   "#b0a782",
-  //   "#d1a081",
-  //   "#e79b80",
-  //   ],
-  palette:[
-    "#ffff00",
-    "#ff007f",
-    "#00ffff",
-    "#fc961f"
-    ],
   resizeCanvas : function() {
     //canvas.width = window.innerWidth;
     //canvas.height = window.innerHeight - grid.canvas.offsetTop;
@@ -58,6 +36,10 @@ var canvas = {
     
     canvas.canvas.width = (4/5)*minSide;
     canvas.canvas.height = (4/5)*minSide;
+    
+    canvas.settings.spacing = canvas.canvas.height/32;
+    canvas.settings.point1 = {"x":canvas.settings.currentStep*canvas.canvas.height/2,"y":canvas.settings.currentStep*canvas.canvas.height/2};
+    canvas.settings.point2 = {"x":canvas.canvas.height-canvas.settings.point1.x,"y":canvas.canvas.height-canvas.settings.point1.y};
     
     /**
      * Your drawings need to be inside this function otherwise they will be reset when
@@ -102,54 +84,65 @@ var canvas = {
     canvas.ctx.clearRect(0,0,canvas.canvas.width,canvas.canvas.height);
     canvas.drawBackground();
     
-    var cellLength = ((canvas.canvas.width-4*canvas.padding-(canvas.settings.cellsInWidth-1)*canvas.settings.spacing)/canvas.settings.cellsInWidth);
-    for(i=0;i<canvas.settings.cellsInWidth;i++){
-      for(j=0;j<canvas.settings.cellsInWidth;j++){
-        canvas.ctx.setTransform(1,0,0,1,(i*(cellLength+canvas.settings.spacing))+0.5+2*canvas.padding,(j*(cellLength+canvas.settings.spacing))+0.5+2*canvas.padding);
-        var hex = canvas.palette[getRandomInt(0,canvas.palette.length-1)];
-        var hex2 = canvas.palette[getRandomInt(0,canvas.palette.length-1)];
-        var gradient = canvas.ctx.createLinearGradient(0,0,getRandomInt(0,cellLength),cellLength);
-        gradient.addColorStop(0,hexToRGB("#000000",0.2));
-        gradient.addColorStop(1,hexToRGB("#ebebeb",0.2));
-        canvas.ctx.strokeStyle = gradient;
-        canvas.drawCell(i,j,cellLength);
-        canvas.drawCell(i,j,cellLength);
-        canvas.drawCell(i,j,cellLength);
-        canvas.drawCell(i,j,cellLength);
-        canvas.drawCell(i,j,cellLength);
-        canvas.drawCell(i,j,cellLength);
-      }
-    }
-    // for(var x=0;x<canvas.canvas.width;x+=cellLength+canvas.settings.spacing){
-    //   for(var y=0;y<canvas.canvas.height;y+=cellLength+canvas.settings.spacing){
-    //     canvas.drawCell(x,y,cellLength);
-    //     canvas.drawCell(x,y,cellLength);
-    //   }
-    // }
-  },
-  
-  drawCell: function(i,j,cellLength){
-    var it, cp1x,cp1y,cp2x,cp2y,cp3x,cp3y;
-    canvas.ctx.moveTo(getRandomInt(0,cellLength),getRandomInt(0,cellLength));
+    
+    // Move registration point to the center of the canvas
+    canvas.ctx.translate(canvas.canvas.width/2, canvas.canvas.height/2);
+    // Rotate 1 degree
+    // canvas.ctx.rotate(45*Math.PI / 180);
+    // Move registration point back to the top left corner of canvas
+    canvas.ctx.translate(-canvas.canvas.width/2, -canvas.canvas.height/2);
+    
+    var i;
+    var p1 = canvas.settings.point1;
+    var p2 = canvas.settings.point2;
+    
+    canvas.ctx.moveTo(p1.x,p1.y);
     canvas.ctx.beginPath();
-    // canvas.ctx.strokeStyle = 'rgba(0,' + Math.floor(255 - 42.5 * i) + ',' +
-    //                   Math.floor(255 - 42.5 * j) + ',0.2)';
-    for(it=0;it<5;it++){
-      cp1x = getRandomInt(0,cellLength);
-      cp2x = getRandomInt(0,cellLength);
-      cp3x = getRandomInt(0,cellLength);
-      cp1y = getRandomInt(0,cellLength);
-      cp2y = getRandomInt(0,cellLength);
-      cp3y = getRandomInt(0,cellLength);
-      canvas.ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,cp3x,cp3y);
+    
+    for(i=0;i<canvas.canvas.width;i+=2*canvas.settings.spacing){
+      canvas.ctx.lineTo(i,0);
+      canvas.ctx.lineTo(i+canvas.settings.spacing,0);
+      canvas.ctx.lineTo(p1.x,p1.y);
+      
+      canvas.ctx.lineTo(i+canvas.settings.spacing,canvas.canvas.height);
+      canvas.ctx.lineTo(i+canvas.settings.spacing*2,canvas.canvas.height);
+      canvas.ctx.lineTo(p1.x,p1.y);
+      
+      canvas.ctx.lineTo(0,i+canvas.settings.spacing);
+      canvas.ctx.lineTo(0,i+canvas.settings.spacing*2);
+      canvas.ctx.lineTo(p1.x,p1.y);
+      
+      canvas.ctx.lineTo(canvas.canvas.height,i);
+      canvas.ctx.lineTo(canvas.canvas.height,i+canvas.settings.spacing);
+      canvas.ctx.lineTo(p1.x,p1.y);
     }
-    canvas.ctx.stroke();
+    
+    for(i=0;i<canvas.canvas.width;i+=2*canvas.settings.spacing){
+      canvas.ctx.lineTo(i,0);
+      canvas.ctx.lineTo(i+canvas.settings.spacing,0);
+      canvas.ctx.lineTo(p2.x,p2.y);
+      
+      canvas.ctx.lineTo(i+canvas.settings.spacing,canvas.canvas.height);
+      canvas.ctx.lineTo(i+canvas.settings.spacing*2,canvas.canvas.height);
+      canvas.ctx.lineTo(p2.x,p2.y);
+      
+      canvas.ctx.lineTo(0,i+canvas.settings.spacing);
+      canvas.ctx.lineTo(0,i+canvas.settings.spacing*2);
+      canvas.ctx.lineTo(p2.x,p2.y);
+      
+      canvas.ctx.lineTo(canvas.canvas.height,i);
+      canvas.ctx.lineTo(canvas.canvas.height,i+canvas.settings.spacing);
+      canvas.ctx.lineTo(p2.x,p2.y);
+    }
+    canvas.ctx.fillStyle="black";
+    canvas.ctx.fill('evenodd');
+    // setTimeout(canvas.loop,0);
   },
   
   drawBackground: function(){
     var i,j;
     
-    if(false){
+    if(true){
       canvas.ctx.fillStyle = canvas.color_bg;
       canvas.ctx.fillRect(0,0,canvas.canvas.width,canvas.canvas.height);
       canvas.ctx.fillStyle = canvas.color_bg;
@@ -177,9 +170,11 @@ var canvas = {
     var b = point1.y - point2.y;
     return Math.sqrt( a*a + b*b );
   },
-  
-  fillCell: function(point) {
-    canvas.ctx.fillRect(point.x,point.y,canvas.settings.cellWidth,canvas.settings.cellWidth);
+
+  loop : function(){
+    console.log("loop");
+    canvas.settings.currentStep = (canvas.settings.currentStep+0.01)%1;
+    canvas.resizeCanvas();
   }
 };
 
