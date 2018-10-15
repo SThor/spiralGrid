@@ -25,8 +25,8 @@ var canvas, ctx,
         point1: {"x": 300, "y": 300},
         point2: {"x": 200, "y": 200},
         spacing: 0,
-        currentStep: 0.05,
-        sections: 200
+        currentStep: 0.95,
+        sections: 120
     },
     center, bottomCenter, topCenter;
 
@@ -39,10 +39,15 @@ resizeCanvas = function () {
     canvas.width = (4 / 5) * minSide;
     canvas.height = (4 / 5) * minSide;
 
+    center = {"x": canvas.width / 2, "y": canvas.height / 2};
+    bottomCenter = {"x": canvas.width / 2, "y": canvas.height};
+    topCenter = {"x": canvas.width / 2, "y": 0};
+
     settings.spacing = canvas.height / 32;
+    // settings.currentStep = settings.spacing
     settings.point1 = {
         "x": settings.currentStep * canvas.height / 2,
-        "y": settings.currentStep * canvas.height / 2
+        "y": center.y
     };
     settings.point2 = {
         "x": canvas.height - settings.point1.x,
@@ -84,9 +89,6 @@ getRainbowColor = function (i, total) {
 };
 
 drawStuff = function () {
-    center = {"x": canvas.width / 2, "y": canvas.height / 2};
-    bottomCenter = {"x": canvas.width / 2, "y": canvas.height};
-    topCenter = {"x": canvas.width / 2, "y": 0};
     var point;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
