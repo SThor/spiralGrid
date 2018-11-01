@@ -16,6 +16,14 @@ function hexToRGB(hex, alpha) {
     }
 }
 
+var foregroundPalette = [
+    "568A8C",
+    "424A53"
+];
+var backgroundPalette = [
+    "D4B295",
+    "D7D5BF"
+];
 
 var canvas, ctx,
     color_bg = "#F3ECE2",
@@ -44,10 +52,10 @@ resizeCanvas = function () {
     topCenter = {"x": canvas.width / 2, "y": 0};
 
     settings.spacing = canvas.height / 32;
-    // settings.currentStep = settings.spacing
+    // settings.currentStep = settings.spacing;
     settings.point1 = {
         "x": settings.currentStep * canvas.height / 2,
-        "y": center.y
+        "y": canvas.height / 2
     };
     settings.point2 = {
         "x": canvas.height - settings.point1.x,
@@ -70,11 +78,15 @@ hexToRGB = function (hex) {
     } : null;
 };
 
-lerp = function (a, b, t) {
+colorLerp = function (a, b, t) {
     var color1 = hexToRGB(a);
     var color2 = hexToRGB(b);
 
     return "rgb(" + ((color1.r * t) + (color2.r * 1 - t)) + "," + ((color1.g * t) + (color2.g * 1 - t)) + "," + ((color1.b * t) + (color2.b * 1 - t)) + ")";
+};
+
+lerp = function(a,b,t){
+    return a*t + b*(1-t);
 };
 
 getRainbowColor = function (i, total) {
@@ -121,72 +133,54 @@ drawStuff = function () {
         ctx.lineTo(p2.x, p2.y);
     }
     ctx.closePath();
-
-    // for (i = 0; i < canvas.width; i += 2 * settings.spacing) {
-    //     ctx.lineTo(i, 0);
-    //     ctx.lineTo(i + settings.spacing, 0);
-    //     ctx.lineTo(p1.x, p1.y);
-    //
-    //     ctx.lineTo(i + settings.spacing, canvas.height);
-    //     ctx.lineTo(i + settings.spacing * 2, canvas.height);
-    //     ctx.lineTo(p1.x, p1.y);
-    //
-    //     ctx.lineTo(0, i + settings.spacing);
-    //     ctx.lineTo(0, i + settings.spacing * 2);
-    //     ctx.lineTo(p1.x, p1.y);
-    //
-    //     ctx.lineTo(canvas.height, i);
-    //     ctx.lineTo(canvas.height, i + settings.spacing);
-    //     ctx.lineTo(p1.x, p1.y);
-    // }
-
-    // for (i = 0; i < canvas.width; i += 2 * settings.spacing) {
-    //     ctx.lineTo(i, 0);
-    //     ctx.lineTo(i + settings.spacing, 0);
-    //     ctx.lineTo(p2.x, p2.y);
-    //
-    //     ctx.lineTo(i + settings.spacing, canvas.height);
-    //     ctx.lineTo(i + settings.spacing * 2, canvas.height);
-    //     ctx.lineTo(p2.x, p2.y);
-    //
-    //     ctx.lineTo(0, i + settings.spacing);
-    //     ctx.lineTo(0, i + settings.spacing * 2);
-    //     ctx.lineTo(p2.x, p2.y);
-    //
-    //     ctx.lineTo(canvas.height, i);
-    //     ctx.lineTo(canvas.height, i + settings.spacing);
-    //     ctx.lineTo(p2.x, p2.y);
-    // }
-    ctx.fillStyle = "black";
+    // ctx.fillStyle = "black";
     // ctx.stroke();
-    ctx.fill('evenodd');
+    // ctx.fill('evenodd');
     // setTimeout(loop,0);
+
+    ctx.clip("evenodd");
+    fillWithColors(foregroundPalette[0],foregroundPalette[1],true);
 };
 
-drawBackground = function () {
-    var i, j;
+/**
+ * Returns a random number between min (inclusive) and max (exclusive)
+ */
+function getRandomArbitrary(min, max) {
+    return Math.random() * (max - min) + min;
+}
 
-    if (true) {
-        ctx.fillStyle = color_bg;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = color_bg;
-        ctx.fillStyle = "white";
-        for (i = 0; i < 30000; i++) {
-            ctx.fillStyle = hexToRGB("#ffffff", getRandomInt(2, 10) * 0.1);
-            ctx.fillRect(getRandomInt(padding, canvas.width - padding), getRandomInt(padding, canvas.height - padding), 1, 1);
+/**
+ * Returns a random integer between min (inclusive) and max (inclusive)
+ * Using Math.round() will give you a non-uniform distribution!
+ */
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+var backgroundLimit = 100000;
+
+fillWithColors=function(color1, color2, variableSize){
+    var r,x,y, proximity, maxDistance;
+    var minR=1;
+    var maxR = 10;
+    maxDistance = Math.sqrt( (center.x)*(center.x) + (center.y)*(center.y) );
+    for(var i =0;i<backgroundLimit;i++){
+        r=getRandomInt(minR,maxR);
+        x=getRandomInt(r,canvas.width-r);
+        y=getRandomInt(r,canvas.height-r);
+        if(variableSize){
+            proximity = Math.sqrt( (center.x-x)*(center.x-x) + (center.y-y)*(center.y-y) );
+            r = lerp(maxR*2,minR/2,proximity/(maxDistance));
         }
-    } else {
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = color_bg;
-        ctx.fillRect(padding, padding, canvas.width - 2 * padding, canvas.height - 2 * padding);
-        for (i = 0; i < canvas.width - 2 * padding; i++) {
-            for (j = 0; j < canvas.width - 2 * padding; j++) {
-                ctx.fillStyle = hexToRGB("#ffffff", getRandomInt(2, 10) * 0.05);
-                ctx.fillRect(i + padding, j + padding, 1, 1);
-            }
-        }
+        ctx.beginPath();
+        ctx.arc(x,y,r,0,Math.PI*2);
+        ctx.fillStyle=colorLerp(color1, color2,Math.random());
+        ctx.fill()
     }
+}
+
+drawBackground = function () {
+    fillWithColors(backgroundPalette[0],backgroundPalette[1])
 };
 
 distance = function (point1, point2) {
